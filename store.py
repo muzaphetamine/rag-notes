@@ -35,6 +35,7 @@ for chunk_file in chunk_folder.glob("*.json"):
                 ids.append(f"{chunk['source']}_{chunk_num}")
                 chunk_num+=1
                 curr_metadata={
+                    "id": chunk["id"],
                     "source": chunk["source"],
                     "page_start": min(chunk["pages"]),
                     "page_end": max(chunk["pages"])
@@ -47,18 +48,20 @@ for chunk_file in chunk_folder.glob("*.json"):
 if documents:
     print("Generating embeddings...")
     embeddings = model.encode(documents)
+    collection.add(
+        documents=documents,
+        ids=ids,
+        metadatas=metadatas,
+        embeddings=embeddings.tolist()
+    )
+    print(f"Stored {len(documents)} chunks in Chroma.")
+else:
+    print("No documents found to store.")
 
-collection.add(
-    documents=documents,
-    ids=ids,
-    metadatas=metadatas,
-    embeddings=embeddings.tolist()
-)
 print("Done!")
-print(f"Stored {len(documents)} chunks in Chroma.")
 
-results = collection.query(
-    query_texts=["What is normalization?"],
-    n_results=3
-)
-print(results)
+#results = collection.query(
+#    query_texts=["What is normalization?"],
+#    n_results=3
+#)
+#print(results)

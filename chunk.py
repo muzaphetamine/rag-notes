@@ -49,6 +49,7 @@ def chunk(txt_file):
 
         chunks=[]
         current_chunk=[]
+        chunk_num=1
         centroid=None
         threshold=0.45
         for (sent, page_index),embedding in embed_list:
@@ -62,20 +63,24 @@ def chunk(txt_file):
                 centroid=np.mean(np.array([e for _,_,e in current_chunk]),axis=0)
             else:
                 chunks.append({
+                    "id": f"{file_name}_{chunk_num}",
                     "source": file_name,
                     "text":" ".join([sent for sent,_,_ in current_chunk]),
                     "pages": [page for _,page,_ in current_chunk],
                     "centroid": centroid.tolist()
                 })
+                chunk_num+=1
                 current_chunk=[(sent, page_index, embedding)]
                 centroid=embedding
         if current_chunk:
             chunks.append({
+                        "id": f"{file_name}_{chunk_num}",
                         "source": file_name,
                         "text":" ".join([sent for sent,_,_ in current_chunk]),
                         "pages": [page for _,page,_ in current_chunk],
                         "centroid": centroid.tolist()
                     })
+            chunk_num+=1
         
         output_file = Path("output/chunks") / f"{file_name}_chunks.json"
         with open(output_file, "w", encoding="utf-8") as f:
