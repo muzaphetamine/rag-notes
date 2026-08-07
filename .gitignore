@@ -6,3 +6,4 @@ output/
 database/chroma/
 todo.txt
 debug.py
+.env

@@ -32,7 +32,7 @@ for chunk_file in chunk_folder.glob("*.json"):
             chunk_num=1
             for chunk in chunks:
                 documents.append(chunk["text"])
-                ids.append(f"{chunk['source']}_{chunk_num}")
+                ids.append(chunk["id"])
                 chunk_num+=1
                 curr_metadata={
                     "id": chunk["id"],

@@ -7,7 +7,10 @@ import json
 from pathlib import Path
 
 
-nltk.download('punkt_tab')
+try:
+    nltk.data.find('tokenizers/punkt_tab')
+except LookupError:
+    nltk.download('punkt_tab')
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 
