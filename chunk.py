@@ -96,9 +96,9 @@ def chunk(txt_file):
 
 
 
-text_folder = Path("output/text")
+text_folder = Path("output/md")
 
-for txt_file in text_folder.glob("*.txt"):
+for txt_file in text_folder.glob("*.md"):
     try:
         print(f"Processing {txt_file.name}")
         chunk(txt_file)
