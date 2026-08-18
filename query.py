@@ -35,8 +35,9 @@ for chunk_file in chunk_folder.glob("*.json"):
                 bm25_metadata.append({
                     "id": chunk["id"],
                     "source": chunk["source"],
-                    "page_start": min(chunk["pages"]),
-                    "page_end": max(chunk["pages"])
+                    #"page_start": min(chunk["pages"]),
+                    #"page_end": max(chunk["pages"]),
+                    "heading": chunk["heading"]
                 })
     except Exception as e:
         print(f"✗ Failed on {chunk_file.name}: {e}")
@@ -65,8 +66,9 @@ def retrieve(question, k=3,n=3):
         bm25_results.append({
             "id": bm25_metadata[i]['id'],
             "source": bm25_metadata[i]['source'],
-            "page_start": bm25_metadata[i]['page_start'],
-            "page_end": bm25_metadata[i]['page_end'],
+            #"page_start": bm25_metadata[i]['page_start'],
+            #"page_end": bm25_metadata[i]['page_end'],
+            "heading": bm25_metadata[i]["heading"],
             "text": docs[i],
             "retrieval_score": scores[i],
             "retriever": "bm25"
@@ -95,8 +97,9 @@ def retrieve(question, k=3,n=3):
         chroma_results.append({
             "id": raw_results["metadatas"][0][i]['id'],
             "source": raw_results["metadatas"][0][i]['source'],
-            "page_start": raw_results["metadatas"][0][i]['page_start'],
-            "page_end": raw_results["metadatas"][0][i]['page_end'],
+            #"page_start": raw_results["metadatas"][0][i]['page_start'],
+            #"page_end": raw_results["metadatas"][0][i]['page_end'],
+            "heading": raw_results["metadatas"][0][i]["heading"],
             "text": raw_results["documents"][0][i],
             "retrieval_score": raw_results["distances"][0][i],
             "retriever": "chroma"
@@ -140,3 +143,6 @@ def fuse(bm25_results, chroma_results):
         results.append(result)
     #print(results)
     return results
+
+
+
