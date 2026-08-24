@@ -24,7 +24,7 @@ def main():
     all_chroma = []
     for subquery in subqueries:
         print(f"\nSubquery: {subquery}")
-        bm25, chroma = retrieve(subquery,  k=10, n=10)
+        bm25, chroma = retrieve(subquery,  k=3, n=3)
         print_results("BM25", bm25)
         print_results("Chroma", chroma)
         all_bm25.extend(bm25)

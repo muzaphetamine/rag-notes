@@ -2,10 +2,8 @@ import os
 os.environ["TORCHINDUCTOR_DISABLE"] = "1"
 os.environ["TORCH_COMPILE_DISABLE"] = "1"
 
-
 import argparse
 from pathlib import Path
-
 from docling.document_converter import DocumentConverter
 
 SUPPORTED_EXTENSIONS = {".pdf", ".pptx", ".docx"}
@@ -31,7 +29,7 @@ def convert_folder(input_dir: Path, output_dir: Path) -> None:
     failed = []
 
     for i, file_path in enumerate(files, start=1):
-        out_path = output_dir / f"{file_path.stem}.md"
+        out_path = output_dir / f"{file_path.stem}.json"
 
         # Skip if already converted (so re-running doesn't redo everything)
         if out_path.exists():
@@ -42,9 +40,10 @@ def convert_folder(input_dir: Path, output_dir: Path) -> None:
         print(f"[{i}/{len(files)}] Converting {file_path.name} ...")
         try:
             result = converter.convert(str(file_path))
-            markdown = result.document.export_to_markdown()
+            # Save the full DoclingDocument structure (headings, tables, text, provenance)
+            # instead of flattening to markdown -- this is what HybridChunker needs later.
+            result.document.save_as_json(out_path)
 
-            out_path.write_text(markdown, encoding="utf-8")
             print(f"    -> saved {out_path.name}")
             succeeded.append(file_path.name)
 
@@ -62,9 +61,9 @@ def convert_folder(input_dir: Path, output_dir: Path) -> None:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Batch convert docs to markdown with Docling")
+    parser = argparse.ArgumentParser(description="Batch convert docs to Docling JSON")
     parser.add_argument("--input", type=str, default="input", help="Folder containing source files")
-    parser.add_argument("--output", type=str, default="output/md", help="Folder to write .md files to")
+    parser.add_argument("--output", type=str, default="output/docjson", help="Folder to write .json files to")
     args = parser.parse_args()
 
     input_dir = Path(args.input)
