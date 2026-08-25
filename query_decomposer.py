@@ -1,4 +1,4 @@
-from llm import decompose
+from llm import decompose, generate_answer
 from query import retrieve
 from query import fuse
 
@@ -23,16 +23,19 @@ def main():
     all_bm25 = []
     all_chroma = []
     for subquery in subqueries:
-        print(f"\nSubquery: {subquery}")
-        bm25, chroma = retrieve(subquery,  k=3, n=3)
-        print_results("BM25", bm25)
-        print_results("Chroma", chroma)
+        #print(f"\nSubquery: {subquery}")
+        bm25, chroma = retrieve(subquery,  k=5, n=5)
+        #print_results("BM25", bm25)
+        #print_results("Chroma", chroma)
         all_bm25.extend(bm25)
         all_chroma.extend(chroma)
 
     results = fuse(all_bm25, all_chroma)
     #print(results)
     #print(retrieve("Database Management System"))
+
+    answer=generate_answer(question, results)
+    print(answer)
 
 
 if __name__ == "__main__":

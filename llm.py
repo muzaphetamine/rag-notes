@@ -99,4 +99,95 @@ def decompose(question):
     #print(subqueries)
     return subqueries
 
-#decompose("what is dbms")
+
+def generate_answer(question, results):
+    prompt = f"""
+            You are a query answering assistant for a RAG system.
+
+            You will be provided a question and retrieved study material.
+            Answer the question using ONLY the information contained in the
+            provided study material.
+
+            Evaluate each retrieved chunk for relevance to the question.
+            Use the most relevant chunks as the basis for the answer.
+            Retrieved chunks may contain irrelevant results; ignore them.
+            Do not give preference to a chunk based on its retrieval method.
+            DO NOT introduce information from outside the provided chunks.
+
+            You may rearrange, combine, summarize, and format the information
+            to make the answer clear and readable.
+
+            Answer the question in sufficient depth for an exam-style answer.
+            Include all relevant information from the retrieved material, but
+            do not add unrelated information.
+
+            The answer should be written as a 10-mark university exam answer.
+
+            Formatting:
+            - Use a clear title or heading for the answer.
+            - Use numbered points and subpoints where appropriate.
+            - Explain each point in complete sentences.
+            - Use tables only when the question asks for a comparison/difference and a table is appropriate.
+            - Avoid excessive bold text.
+            - Do not use decorative Markdown such as horizontal rules.
+            - Do not write like a web article or ChatGPT explanation.
+            - Make the answer structured, detailed, and suitable for directly studying
+            or reproducing in a university examination.
+
+            Question:
+            {question}
+
+            Retrieved study material:
+            """
+    for res in results:
+        prompt += f"""
+                    --- Chunk ---
+                    ID: {res['id']}
+                    Heading: {res['heading']}
+                    Content:
+                    {res['text']}
+                    """
+    response = client.models.generate_content(
+        model="gemini-3.6-flash",
+        contents=prompt
+    )
+    return response.text
+
+
+def extract_questions(text):
+    prompt = f"""
+            You are an assistant that extracts university examination questions
+            from question papers and question banks.
+
+            Extract ONLY the actual examination questions.
+
+            For each question return:
+            {{
+                "label": "original question number/label, if present otherwise just a Q",
+                "question": "complete question text"
+            }}
+
+            Rules:
+            1. Preserve the original wording as closely as possible.
+            2. Ignore marks, CO levels, Bloom levels, module numbers, and other
+            metadata that are not part of the question itself.
+            3. Do not combine separate questions.
+            4. If a question spans multiple lines or table cells, combine those
+            parts into one question.
+            5. Preserve labels such as 1a, 1b, 2a, etc.
+            6. Do not invent, complete, or answer questions.
+            7. Return ONLY a JSON array.
+
+            Question paper content:
+            {text}
+            """
+
+    response = client.models.generate_content(
+        model="gemini-3.6-flash",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json"
+        )
+    )
+
+    return json.loads(response.text)
