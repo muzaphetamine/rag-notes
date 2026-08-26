@@ -19,8 +19,6 @@ def store_text(model, collection):
                     curr_metadata={
                         "id": chunk["id"],
                         "source": chunk["source"],
-                        #"page_start": min(chunk["pages"]),
-                        #"page_end": max(chunk["pages"]),
                         "heading": chunk["heading"]
                     }
                     metadatas.append(curr_metadata)
@@ -95,12 +93,6 @@ def main():
     store_text(model, collection)
     store_images(model, image_collection)
     print("Done!")
-
-    #results = collection.query(
-    #    query_texts=["What is normalization?"],
-    #    n_results=3
-    #)
-    #print(results)
 
 
 if __name__ == "__main__":

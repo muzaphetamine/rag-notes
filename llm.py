@@ -3,9 +3,28 @@ from google import genai
 from google.genai import types
 import os
 import json
+import time
+from collections import deque
 
 load_dotenv()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+MAX_REQUESTS_PER_MINUTE = max(1, int(os.getenv("GEMINI_RPM", "5")))
+MODEL =os.getenv("MODEL", "gemini-3.6-flash")
+_request_times = deque()
+
+
+def wait_for_rate_limit():
+    now = time.time()
+    while _request_times and now - _request_times[0] >= 60:
+        _request_times.popleft()
+    if len(_request_times) >= MAX_REQUESTS_PER_MINUTE:
+        wait_time = 60-(now - _request_times[0])
+        print(f"Rate limit reached. Waiting {wait_time:.1f}s...")
+        time.sleep(wait_time)
+        now = time.time()
+        while _request_times and now - _request_times[0] >= 60:
+            _request_times.popleft()
+    _request_times.append(time.time())
 
 
 def decompose(question):
@@ -88,15 +107,15 @@ def decompose(question):
                 Question to answer:
                 {question}
                 """
+    wait_for_rate_limit()
     response = client.models.generate_content(
-        model="gemini-3.6-flash",
+        model=MODEL,
         contents=prompt,
         config=types.GenerateContentConfig(
             response_mime_type="application/json"
         )
     )
     subqueries = json.loads(response.text)
-    #print(subqueries)
     return subqueries
 
 
@@ -147,8 +166,9 @@ def generate_answer(question, results):
                     Content:
                     {res['text']}
                     """
+    wait_for_rate_limit()
     response = client.models.generate_content(
-        model="gemini-3.6-flash",
+        model=MODEL,
         contents=prompt
     )
     return response.text
@@ -181,13 +201,50 @@ def extract_questions(text):
             Question paper content:
             {text}
             """
-
-    response = client.models.generate_content(
-        model="gemini-3.6-flash",
+    wait_for_rate_limit()
+    response= client.models.generate_content(
+        model=MODEL,
         contents=prompt,
         config=types.GenerateContentConfig(
             response_mime_type="application/json"
         )
     )
-
     return json.loads(response.text)
+
+
+def rerank_images(question, image_results):
+    if not image_results: return []
+    candidates = [
+        {
+            "id": image["id"],
+            "heading": image["heading"]
+        }
+        for image in image_results
+    ]
+    prompt=f"""
+        Given the original exam question and the candidate image captions, select
+        only images that are directly useful for answering the question as a whole.
+        Do NOT select an image merely because it is generally related to the chapter
+        or topic.
+        If no candidate is genuinely useful, return an empty list.
+        Select at most 2 images.
+        Return ONLY the IDs of the selected images.
+
+        Given question: {question}
+    """
+    for candidate in candidates:
+        prompt += f"""
+                    ID: {candidate["id"]}
+                    Caption: {candidate["heading"]}
+                    """
+    wait_for_rate_limit()
+    response =client.models.generate_content(
+        model=MODEL,
+        contents=prompt,
+        config={
+            "response_mime_type": "application/json",
+            "response_schema": list[str]
+        }
+    )
+    selected_ids = json.loads(response.text)
+    return selected_ids[:2]

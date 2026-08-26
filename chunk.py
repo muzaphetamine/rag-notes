@@ -32,16 +32,8 @@ def chunk(txt_file):
         content=file.read()
         file_name = txt_file.stem
         sections = re.split(r'(?m)^(#{1,6})\s+(.+)$', content)
-
         sent_list=[]
 
-        #page_index=1
-        #for page_content in content:
-        #    sentences=nltk.sent_tokenize(page_content)
-        #    for sent in sentences:
-        #        if valid(sent): sent_list.append((sent,page_index))
-        #    page_index+=1
-        
         current_heading = ""
         for i in range(1, len(sections), 3):
             heading_level = sections[i]
@@ -53,15 +45,11 @@ def chunk(txt_file):
                 if valid(sent):
                     sent_list.append((sent, current_heading))
 
-
-
         raw_sent_list=[sent for sent, heading in sent_list]
         if not raw_sent_list:
-            #print(f"No valid sentences in {txt_file.name}")
             return
         embeddings=model.encode(raw_sent_list)
         embed_list=list(zip(sent_list,embeddings))
-
 
         chunks=[]
         current_chunk=[]
@@ -104,10 +92,9 @@ def chunk(txt_file):
                     })
             chunk_num+=1
         
-        output_file = Path("output/chunks") / f"{file_name}_chunks.json"
+        output_file =Path("output/chunks") / f"{file_name}_chunks.json"
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(chunks, f, indent=4, ensure_ascii=False)
-
         print("we have these many chunks: ", len(chunks))
         print("total sentences: ", len(sent_list))
         print(f"Saved to {output_file}")

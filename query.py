@@ -5,23 +5,28 @@ from pathlib import Path
 from rank_bm25 import BM25Okapi
 import re
 
-model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-client = chromadb.PersistentClient(path="database/chroma")
+model =SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+client =chromadb.PersistentClient(path="database/chroma")
 
 try:
-    collection = client.get_collection("study_material")
+    collection =client.get_collection("study_material")
 except Exception:
     print("No indexed knowledge base found. Run store.py first.")
     exit()
 
+try:
+    image_collection= client.get_collection("study_images")
+except Exception:
+    image_collection = None
+    print("No image base found.")
+
+
 def preprocess(text):
     text = text.lower()
-    text = re.sub(r"[^a-z0-9\s]", "", text)   #remove punctuation
+    text = re.sub(r"[^a-z0-9\s]", "", text)
     return text.split()
 
 
-
-#getting chunks from json for bm25
 docs=[]
 bm25_metadata = []
 chunk_folder= Path("output/chunks")
@@ -35,8 +40,6 @@ for chunk_file in chunk_folder.glob("*.json"):
                 bm25_metadata.append({
                     "id": chunk["id"],
                     "source": chunk["source"],
-                    #"page_start": min(chunk["pages"]),
-                    #"page_end": max(chunk["pages"]),
                     "heading": chunk["heading"]
                 })
     except Exception as e:
@@ -44,79 +47,42 @@ for chunk_file in chunk_folder.glob("*.json"):
 print(f"Loaded {len(docs)} chunks.")
 
 tokenized_corpus= [preprocess(doc) for doc in docs]
-#print(tokenized_corpus[0])
 bm25 = BM25Okapi(tokenized_corpus)
 print("bm25 index done.")
 
 
-#question = input("Enter your question: ")
-
 def retrieve(question, k=3,n=3):
-    #print("----------BM25 RETRIVAL------------------------")
     query_tokens=preprocess(question)
     scores= bm25.get_scores(query_tokens)
-    #k=3
     top_indices = scores.argsort()[-k:][::-1]
-    #for i in top_indices:
-    #    print(scores[i])
-    #    print(bm25_metadata[i])
-    #    print(docs[i])
     bm25_results=[]
     for i in top_indices:
         bm25_results.append({
             "id": bm25_metadata[i]['id'],
             "source": bm25_metadata[i]['source'],
-            #"page_start": bm25_metadata[i]['page_start'],
-            #"page_end": bm25_metadata[i]['page_end'],
             "heading": bm25_metadata[i]["heading"],
             "text": docs[i],
             "retrieval_score": scores[i],
             "retriever": "bm25"
         })
 
-
-    #print("\n\n\n----------CHROMADB RETRIVAL------------------------")
     question_embedding = model.encode(question)
     raw_results = collection.query(
         query_embeddings= [question_embedding.tolist()],
         n_results= n,
         include=["documents", "metadatas", "distances"]
     )
-    #ids=results["ids"][0]
-    #documents=results["documents"][0]
-    #metadatas=results["metadatas"][0]
-    #distances= results["distances"][0]
-    #for i in range(len(ids)):
-    #    print("\n------------------------------------------------")
-    #    print(f"Rank: {i+1} Distance: {distances[i]} Source: {metadatas[i]['source']}")
-    #    print(f"Pages: {metadatas[i]['page_start']}-{metadatas[i]['page_end']}")
-    #    print("--------------------------------------------------")
-    #    print(documents[i])
     chroma_results=[]
     for i in range(len(raw_results["ids"][0])):
         chroma_results.append({
             "id": raw_results["metadatas"][0][i]['id'],
             "source": raw_results["metadatas"][0][i]['source'],
-            #"page_start": raw_results["metadatas"][0][i]['page_start'],
-            #"page_end": raw_results["metadatas"][0][i]['page_end'],
             "heading": raw_results["metadatas"][0][i]["heading"],
             "text": raw_results["documents"][0][i],
             "retrieval_score": raw_results["distances"][0][i],
             "retriever": "chroma"
-        })
-    
+        })   
     return bm25_results, chroma_results
-
-
-
-#results=[]
-#seen=set()
-#for result in (bm25_results + chroma_results):
-#    if result["id"] not in seen:
-#        results.append(result)
-#        seen.add(result["id"])
-#print(len(results))
-
 
 
 def fuse(bm25_results, chroma_results):
@@ -134,15 +100,58 @@ def fuse(bm25_results, chroma_results):
 
     add_rrf(bm25_results)
     add_rrf(chroma_results)
-
     sorted_rrf = sorted(rrf_scores, key=lambda id: rrf_scores[id], reverse=True)
     results=[]
     for id in sorted_rrf:
         result = rrf_results[id]
         result["rrf_score"] = rrf_scores[id]
         results.append(result)
-    #print(results)
     return results
 
 
+def image_retrieve(question, n=3):
+    if image_collection is None or image_collection.count() == 0:
+        return []
+    question_embedding = model.encode(question)
+    raw_results = image_collection.query(
+        query_embeddings= [question_embedding.tolist()],
+        n_results= n,
+        include=["documents", "metadatas", "distances"]
+    )
+    image_results=[]
+    for i in range(len(raw_results["ids"][0])):
+        image_results.append({
+            "id": raw_results["metadatas"][0][i]['id'],
+            "source": raw_results["metadatas"][0][i]['source'],
+            "heading": raw_results["metadatas"][0][i]["heading"],
+            "image_path": raw_results["metadatas"][0][i]["image_path"],
+            "text": raw_results["documents"][0][i],
+            "retrieval_score": raw_results["distances"][0][i],
+            "retriever": "image_chroma"
+        })
+    return image_results
 
+
+def fuse_multiple(result_sets):
+    rrf_scores={}
+    rrf_results={}
+    rrf_k=60
+    for results in result_sets:
+        for rank, result in enumerate(results, start=1):
+            result_id = result["id"]
+            if result_id not in rrf_scores:
+                rrf_scores[result_id] = 1 / (rrf_k + rank)
+                rrf_results[result_id] = result
+            else:
+                rrf_scores[result_id] += 1 / (rrf_k + rank)
+    sorted_ids =sorted(
+        rrf_scores,
+        key=lambda id: rrf_scores[id],
+        reverse=True
+    )
+    final_results=[]
+    for result_id in sorted_ids:
+        result = rrf_results[result_id]
+        result["rrf_score"] = rrf_scores[result_id]
+        final_results.append(result)
+    return final_results
