@@ -294,10 +294,7 @@ def generate_pdf(answer_file):
                 img.drawHeight =height * scale
                 story.append(Spacer(1, 8))
                 story.append(img)
-                caption = image_data.get(
-                    "text",
-                    ""
-                )
+                caption = image_data.get("text","")
                 if caption:
                     story.append(
                         Paragraph(
@@ -306,10 +303,7 @@ def generate_pdf(answer_file):
                         )
                     )
             except Exception as e:
-                print(
-                    f"Warning: Could not add image "
-                    f"{image_path}: {e}"
-                )
+                print(f"Warning: Could not add image {image_path}: {e}")
         story.append(Spacer(1, 15))
     doc.build(story)
     print(f"Generated → {output_file}")
