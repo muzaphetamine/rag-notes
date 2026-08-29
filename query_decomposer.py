@@ -42,7 +42,7 @@ def main():
             answers = []
             completed_labels = set()
 
-        for q in questions:
+        for q in questions[:6]:
             if q["label"] in completed_labels:
                 print(f"Skipping {q['label']} — already completed.")
                 continue
