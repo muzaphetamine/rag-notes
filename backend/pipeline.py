@@ -6,11 +6,11 @@ from generate_pdf import process_pdfs
 
 
 def run_pipeline(progress_callback=None):
-    process_extraction(progress_callback)
-    process_chunking(progress_callback)
-    process_store(progress_callback)
-    process_questions(progress_callback)
-    process_pdfs(progress_callback)
+    process_extraction(progress_callback=progress_callback)
+    process_chunking(progress_callback=progress_callback)
+    process_store(progress_callback=progress_callback)
+    process_questions(progress_callback=progress_callback)
+    process_pdfs(progress_callback=progress_callback)
 
 
 def main():

@@ -49,7 +49,7 @@ def process_questions(progress_callback=None):
             answers = []
             completed_labels = set()
 
-        for q in questions[]:
+        for q in questions:
             if q["label"] in completed_labels:
                 report(f"Skipping {q['label']} — already completed.", progress_callback)
                 continue
