@@ -17,18 +17,24 @@ def print_results(title, results):
         print()
 
 
-def main():
+def report(message, progress_callback=None):
+    print(message)
+    if progress_callback:
+        progress_callback(message)
+
+
+def process_questions(progress_callback=None):
     question_folder = Path("output/questions")
     answer_folder = Path("output/answers")
     answer_folder.mkdir(parents=True, exist_ok=True)
 
     question_files = list(question_folder.glob("*.json"))
     if not question_files:
-        print("No question files found.")
+        report("No question files found.", progress_callback)
         return
 
     for question_file in question_files:
-        print(f"\nProcessing {question_file.name}...")
+        report(f"\nProcessing {question_file.name}...", progress_callback)
         with open(question_file, "r", encoding="utf-8") as f:
             questions = json.load(f)
         output_file = answer_folder / question_file.name
@@ -37,18 +43,18 @@ def main():
             with open(output_file, "r", encoding="utf-8") as f:
                 answers = json.load(f)
             completed_labels= { answer["label"] for answer in answers}
-            print(f"Found {len(answers)} previously completed questions.")
+            report(f"Found {len(answers)} previously completed questions.", progress_callback)
         else:
             answers = []
             completed_labels = set()
 
         for q in questions[:6]:
             if q["label"] in completed_labels:
-                print(f"Skipping {q['label']} — already completed.")
+                report(f"Skipping {q['label']} — already completed.", progress_callback)
                 continue
             try:
                 question = q["question"]
-                print(f"Processing {q['label']}...")
+                report(f"Processing {q['label']}...", progress_callback)
                 subqueries = decompose(question)
                 all_bm25 = []
                 all_chroma = []
@@ -90,14 +96,17 @@ def main():
                         indent=4,
                         ensure_ascii=False
                     )
-                print(f"Completed {q['label']} → saved.")
+                report(f"Completed {q['label']} → saved.", progress_callback)
             except Exception as e:
-                print(f"Failed question {q['label']}: {e}")
+                report(f"Failed question {q['label']}: {e}", progress_callback)
                 continue
 
-        print(f"Finished {question_file.name}")
-        print(f"Saved → {output_file}")
+        report(f"Finished {question_file.name}", progress_callback)
+        report(f"Saved → {output_file}", progress_callback)
 
+
+def main():
+    process_questions()
 
 if __name__ == "__main__":
     main()
