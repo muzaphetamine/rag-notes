@@ -2,10 +2,12 @@ venv/
 __pycache__/
 backend/__pycache__/
 *.pyc
-input/questions/
-input/sources/
 output/
-database/chroma/
+database/chroma/*
 todo.txt
 backend/debug.py
 .env
+input/sources/*
+!input/sources/.gitkeep
+input/questions/*
+!input/questions/.gitkeep
