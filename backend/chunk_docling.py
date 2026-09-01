@@ -91,22 +91,12 @@ def chunk_document(json_path: Path, progress_callback=None):
     text_out_path =(Path("output/chunks") / f"{file_name}_chunks.json")
     text_out_path.parent.mkdir(parents=True, exist_ok=True)
     with open( text_out_path, "w", encoding="utf-8") as f:
-        json.dump(
-            chunks,
-            f,
-            indent=4,
-            ensure_ascii=False
-        )
+        json.dump(chunks, f, indent=4,ensure_ascii=False)
 
     image_out_path =(Path("output/image_chunks") / f"{file_name}_image_chunks.json")
     image_out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(image_out_path, "w", encoding="utf-8") as f:
-        json.dump(
-            image_chunks,
-            f,
-            indent=4,
-            ensure_ascii=False
-        )
+        json.dump(image_chunks, f,indent=4, ensure_ascii=False)
 
     report(
         f"{file_name}: "
@@ -114,18 +104,21 @@ def chunk_document(json_path: Path, progress_callback=None):
         f"{len(image_chunks)} image chunks",
         progress_callback
     )
-    print(f"-> {text_out_path}")
-    print(f"-> {image_out_path}")
+    report(f"-> {text_out_path}", progress_callback)
+    report(f"-> {image_out_path}", progress_callback)
 
 
-def main():
+def process_chunking(progress_callback=None):
     json_folder = Path("output/docjson")
     for json_file in json_folder.glob("*.json"):
         try:
-            chunk_document(json_file)
+            chunk_document(json_file, progress_callback)
         except Exception as e:
-            print(f"Failed on {json_file.name}: {e}")
-    print("Done!")
+            report(f"Failed on {json_file.name}: {e}", progress_callback)
+    report("Chunking done!", progress_callback)
+
+def main():
+    process_chunking()
 
 
 if __name__ == "__main__":
