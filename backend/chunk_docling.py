@@ -4,6 +4,12 @@ from docling.chunking import HybridChunker
 import json
 
 
+def report(message, progress_callback=None):
+    print(message)
+    if progress_callback:
+        progress_callback(message)
+
+
 def group_table_chunks(raw_chunks):
     groups=[]
     table_groups_by_ref={}
@@ -37,7 +43,7 @@ def merge_group_text(group, chunker, heading):
     return f"{heading}\n{body}" if heading else body
 
 
-def chunk_document(json_path: Path):
+def chunk_document(json_path: Path, progress_callback=None):
     doc = DoclingDocument.load_from_json(json_path)
     file_name = json_path.stem
     chunker = HybridChunker(
@@ -102,13 +108,14 @@ def chunk_document(json_path: Path):
             ensure_ascii=False
         )
 
-    print(
+    report(
         f"{file_name}: "
         f"{len(chunks)} text/table chunks, "
-        f"{len(image_chunks)} image chunks"
+        f"{len(image_chunks)} image chunks",
+        progress_callback
     )
-    print(f"    -> {text_out_path}")
-    print(f"    -> {image_out_path}")
+    print(f"-> {text_out_path}")
+    print(f"-> {image_out_path}")
 
 
 def main():
@@ -117,7 +124,7 @@ def main():
         try:
             chunk_document(json_file)
         except Exception as e:
-            print(f"✗ Failed on {json_file.name}: {e}")
+            print(f"Failed on {json_file.name}: {e}")
     print("Done!")
 
 
