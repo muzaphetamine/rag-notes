@@ -7,14 +7,25 @@ import time
 from collections import deque
 
 load_dotenv()
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+client = None
 MAX_REQUESTS_PER_MINUTE = max(1, int(os.getenv("GEMINI_RPM", "5")))
 MODEL =os.getenv("MODEL", "gemini-3.6-flash")
 _request_times = deque()
 
+def configure(api_key=None, rpm=None, model=None):
+    global client, MAX_REQUESTS_PER_MINUTE, MODEL, _request_times
+    api_key =api_key or os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY is required.")
+    client = genai.Client(api_key=api_key)
+    if rpm is not None: MAX_REQUESTS_PER_MINUTE = max(1, int(rpm))
+    if model: MODEL=model
+    _request_times.clear()
+
 
 def wait_for_rate_limit():
     now = time.time()
+    if client is None: configure()
     while _request_times and now - _request_times[0] >= 60:
         _request_times.popleft()
     if len(_request_times) >= MAX_REQUESTS_PER_MINUTE:
