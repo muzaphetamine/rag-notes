@@ -5,20 +5,11 @@ from pathlib import Path
 from rank_bm25 import BM25Okapi
 import re
 
-model =SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-client =chromadb.PersistentClient(path="database/chroma")
 
-try:
-    collection =client.get_collection("study_material")
-except Exception:
-    print("No indexed knowledge base found. Run store.py first.")
-    exit()
-
-try:
-    image_collection= client.get_collection("study_images")
-except Exception:
-    image_collection = None
-    print("No image base found.")
+def report(message, progress_callback=None):
+    print(message)
+    if progress_callback:
+        progress_callback(message)
 
 
 def preprocess(text):
@@ -27,28 +18,52 @@ def preprocess(text):
     return text.split()
 
 
-docs=[]
-bm25_metadata = []
-chunk_folder= Path("output/chunks")
-for chunk_file in chunk_folder.glob("*.json"):
-    try:
-        print(f"Processing {chunk_file.name}...")
-        with open(chunk_file, 'r', encoding="utf-8") as f:
-            chunks =json.load(f)
-            for chunk in chunks:
-                docs.append(chunk["text"])
-                bm25_metadata.append({
-                    "id": chunk["id"],
-                    "source": chunk["source"],
-                    "heading": chunk["heading"]
-                })
-    except Exception as e:
-        print(f"✗ Failed on {chunk_file.name}: {e}")
-print(f"Loaded {len(docs)} chunks.")
+model=None
+client= None
+collection= None
+image_collection= None
+docs =[]
+bm25_metadata =[]
+bm25= None
 
-tokenized_corpus= [preprocess(doc) for doc in docs]
-bm25 = BM25Okapi(tokenized_corpus)
-print("bm25 index done.")
+def initialize_search(progress_callback=None):
+    global model, client, collection
+    global image_collection, docs, bm25_metadata, bm25
+    report("Loading embedding model...", progress_callback)
+    model =SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+    client =chromadb.PersistentClient(path="database/chroma")
+    try:
+        collection =client.get_collection("study_material")
+    except Exception:
+        raise RuntimeError("No indexed knowledge base found. Run store.py first.") from e
+    try:
+        image_collection= client.get_collection("study_images")
+    except Exception:
+        image_collection =None
+        report("No image base found.", progress_callback)
+
+    docs=[]
+    bm25_metadata = []
+    chunk_folder= Path("output/chunks")
+    for chunk_file in chunk_folder.glob("*.json"):
+        try:
+            report(f"Processing {chunk_file.name}...", progress_callback)
+            with open(chunk_file, 'r', encoding="utf-8") as f:
+                chunks =json.load(f)
+                for chunk in chunks:
+                    docs.append(chunk["text"])
+                    bm25_metadata.append({
+                        "id": chunk["id"],
+                        "source": chunk["source"],
+                        "heading": chunk["heading"]
+                    })
+        except Exception as e:
+            report(f"Failed on {chunk_file.name}: {e}", progress_callback)
+    report(f"Loaded {len(docs)} chunks.", progress_callback)
+
+    tokenized_corpus= [preprocess(doc) for doc in docs]
+    bm25 = BM25Okapi(tokenized_corpus)
+    report("bm25 index done.", progress_callback)
 
 
 def retrieve(question, k=3,n=3):

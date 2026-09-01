@@ -1,5 +1,5 @@
 from llm import decompose, generate_answer, rerank_images
-from query import retrieve, fuse, image_retrieve, fuse_multiple
+from query import initialize_search, retrieve, fuse, image_retrieve, fuse_multiple
 import json
 from pathlib import Path
 
@@ -24,6 +24,7 @@ def report(message, progress_callback=None):
 
 
 def process_questions(progress_callback=None):
+    initialize_search(progress_callback)
     question_folder = Path("output/questions")
     answer_folder = Path("output/answers")
     answer_folder.mkdir(parents=True, exist_ok=True)
@@ -48,7 +49,7 @@ def process_questions(progress_callback=None):
             answers = []
             completed_labels = set()
 
-        for q in questions[:6]:
+        for q in questions[]:
             if q["label"] in completed_labels:
                 report(f"Skipping {q['label']} — already completed.", progress_callback)
                 continue

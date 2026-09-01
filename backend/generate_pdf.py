@@ -5,14 +5,14 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.units import inch
-from reportlab.platypus import (
-    SimpleDocTemplate,
-    Paragraph,
-    Spacer,
-    Image,
-    Preformatted,
-)
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Preformatted
 from xml.sax.saxutils import escape
+
+
+def report(message, progress_callback=None):
+    print(message)
+    if progress_callback:
+        progress_callback(message)
 
 
 def markdown_inline(text):
@@ -140,7 +140,7 @@ def markdown_to_flowables(text, styles):
     return flowables
 
 
-def generate_pdf(answer_file):
+def generate_pdf(answer_file, progress_callback=None):
     with open(answer_file, "r", encoding="utf-8") as f:
         answers = json.load(f)
     pdf_folder = Path("output/pdfs")
@@ -277,7 +277,7 @@ def generate_pdf(answer_file):
         for image_data in images:
             image_path = Path(image_data["image_path"])
             if not image_path.exists():
-                print(f"Warning: Image not found: {image_path}")
+                report(f"Warning: Image not found: {image_path}", progress_callback)
                 continue
             try:
                 img = Image(str(image_path))
@@ -303,28 +303,32 @@ def generate_pdf(answer_file):
                         )
                     )
             except Exception as e:
-                print(f"Warning: Could not add image {image_path}: {e}")
+                report(f"Warning: Could not add image {image_path}: {e}", progress_callback)
         story.append(Spacer(1, 15))
     doc.build(story)
-    print(f"Generated → {output_file}")
+    report(f"Generated → {output_file}", progress_callback)
 
 
-def main():
+def process_pdfs(progress_callback=None):
     answer_folder = Path("output/answers")
     if not answer_folder.exists():
-        print("No answers folder found.")
+        report("No answers found. PDF generation skipped.", progress_callback)
         return
     answer_files = list(answer_folder.glob("*.json"))
     if not answer_files:
-        print("No answer JSON files found.")
+        report("No answer JSON files found.", progress_callback)
         return
     for answer_file in answer_files:
         try:
-            print(f"\nProcessing {answer_file.name}...")
-            generate_pdf(answer_file)
+            report(f"\nProcessing {answer_file.name}...", progress_callback)
+            generate_pdf(answer_file, progress_callback)
         except Exception as e:
-            print(f"✗ Failed on {answer_file.name}: {e}")
-    print("\nDone!")
+            report(f"Failed on {answer_file.name}: {e}", progress_callback)
+    report("PDF generation complete.", progress_callback)
+
+
+def main():
+    process_pdfs()
 
 
 if __name__ == "__main__":
