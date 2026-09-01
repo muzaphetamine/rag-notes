@@ -1,9 +1,11 @@
 venv/
 __pycache__/
+backend/__pycache__/
 *.pyc
-input/
+input/questions/
+input/sources/
 output/
 database/chroma/
 todo.txt
-debug.py
+backend/debug.py
 .env

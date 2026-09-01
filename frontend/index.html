@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notes — RAG Answer PDF Generator</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="header">
+    <div class="brand">
+        <div class="brand-icon" aria-hidden="true"></div>
+        <div class="brand-name">Notes</div>
+        <div class="brand-subtitle">Generate smart answer PDFs from your study material</div>
+    </div>
+
+    <button class="settings-button" title="Settings" type="button">⚙</button>
+</header>
+
+
+<main class="layout">
+
+    <!-- NOTES -->
+    <section class="column">
+        <div class="card left-card">
+
+            <div class="card-title-row">
+                <h2 class="card-title">Your Notes</h2>
+
+                <button class="add-button" type="button"
+                        onclick="document.getElementById('notesInput').click()">
+                    <span class="plus">+</span> Add Notes
+                </button>
+            </div>
+
+            <div class="upload-zone" id="notesDrop">
+                <div>
+                    <div class="upload-icon">⇧</div>
+                    <div class="upload-main">Upload your notes (PDF)</div>
+                    <div class="upload-sub">
+                        Drag & drop files here or click to browse<br>
+                        You can upload multiple files
+                    </div>
+                </div>
+            </div>
+
+            <input id="notesInput" type="file" accept=".pdf,application/pdf" multiple>
+
+            <div class="file-section">
+                <div class="file-section-title" id="notesTitle">Added Notes (0)</div>
+                <div class="file-list" id="notesList">
+                    <div class="empty-note">No notes added yet.</div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- QUESTIONS + OUTPUT + ACTIVITY -->
+    <section class="column middle">
+
+        <div class="card questions-card">
+
+            <div class="card-title-row">
+                <h2 class="card-title">Questions</h2>
+
+                <button class="add-button questions-add" type="button"
+                        onclick="document.getElementById('questionsInput').click()">
+                    <span class="plus">+</span> Add Questions
+                </button>
+            </div>
+
+            <div class="upload-zone question-zone" id="questionsDrop">
+                <div>
+                    <div class="upload-icon">⇧</div>
+                    <div class="upload-main">Upload question papers / question bank (PDF)</div>
+                    <div class="upload-sub">
+                        Drag & drop files here or click to browse<br>
+                        You can upload multiple files
+                    </div>
+                </div>
+            </div>
+
+            <input id="questionsInput" type="file" accept=".pdf,application/pdf" multiple>
+
+            <div class="file-section">
+                <div class="file-section-title" id="questionsTitle">Added Questions (0)</div>
+                <div class="file-list" id="questionsList">
+                    <div class="empty-note">No question papers added yet.</div>
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="card output-card">
+            <div class="card-title-row">
+                <h2 class="card-title">Output</h2>
+            </div>
+
+            <div class="output-box" id="outputBox">
+                <div class="output-placeholder" id="outputPlaceholder">
+                    <div class="output-icon">▣</div>
+                    <div class="output-main">Your generated PDFs will appear here</div>
+                    <div class="output-sub">
+                        Click "Generate" to start processing
+                    </div>
+                </div>
+                <div class="output-list" id="outputList"></div>
+            </div>
+        </div>
+
+
+        <div class="card activity-card">
+            <div class="card-title-row activity-title-row">
+                <h2 class="card-title activity-title">Activity</h2>
+            </div>
+
+            <div class="terminal" id="terminal">
+                <div class="terminal-line">Ready. Add notes and question papers to begin.</div>
+            </div>
+        </div>
+
+    </section>
+
+
+    <!-- CONFIG -->
+    <aside class="column right">
+
+        <div class="card config-card">
+
+            <div class="card-title-row">
+                <h2 class="card-title">Configuration</h2>
+                <span class="config-gear">⚙</span>
+            </div>
+
+            <div class="config-body">
+
+                <div class="config-section">
+                    <label class="field-label" for="apiKey">Gemini API Key</label>
+
+                    <div class="input-wrap">
+                        <input
+                            id="apiKey"
+                            class="text-input password-input"
+                            type="password"
+                            placeholder="Enter your Gemini API key"
+                            autocomplete="off"
+                        >
+
+                        <button class="show-key" id="showKey" type="button" title="Show API key">
+                            ◉
+                        </button>
+                    </div>
+
+                    <div class="field-help">
+                        Your API key is used for this session.
+                    </div>
+                </div>
+
+
+                <div class="config-section">
+                    <label class="field-label" for="model">Model</label>
+
+                    <select id="model" class="select-input">
+                        <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                    </select>
+
+                    <div class="field-help">
+                        Model used for decomposition, generation and image selection.
+                    </div>
+                </div>
+
+
+                <div class="config-section">
+                    <label class="field-label" for="rpm">
+                        RPM (Requests Per Minute)
+                    </label>
+
+                    <input
+                        id="rpm"
+                        class="text-input"
+                        type="number"
+                        min="1"
+                        placeholder="5"
+                        value="5"
+                    >
+
+                    <div class="field-help">
+                        Set this to the request limit of your API account.
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="generate-area">
+
+            <button class="generate-button" id="generateButton" type="button">
+                ✦ &nbsp; Generate
+            </button>
+
+            <div class="generate-help">
+                This will process your notes and questions to generate answer PDFs.
+            </div>
+
+        </div>
+
+    </aside>
+
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
