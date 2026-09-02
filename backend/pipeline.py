@@ -3,9 +3,11 @@ from chunk_docling import process_chunking
 from store import process_store
 from query_decomposer import process_questions
 from generate_pdf import process_pdfs
+from llm import configure
 
 
-def run_pipeline(progress_callback=None):
+def run_pipeline(api_key=None, rpm=None, model=None, progress_callback=None):
+    configure(api_key=api_key,rpm=rpm,model=model)
     process_extraction(progress_callback=progress_callback)
     process_chunking(progress_callback=progress_callback)
     process_store(progress_callback=progress_callback)
