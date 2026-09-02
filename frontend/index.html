@@ -1,199 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Notes — RAG Answer PDF Generator</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes — RAG Answer PDF Generator</title>
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<header class="header">
-    <div class="brand">
-        <div class="brand-icon" aria-hidden="true"></div>
-        <div class="brand-name">Notes</div>
-        <div class="brand-subtitle">Generate smart answer PDFs from your study material</div>
-    </div>
 
-    <button class="settings-button" title="Settings" type="button">⚙</button>
-</header>
+    <header class="header">
+        <div class="brand">
+            <div class="brand-icon" aria-hidden="true"></div>
+            <div class="brand-name">Notes</div>
+            <div class="brand-subtitle">Because question banks dont come with answers</div>
+        </div>
+    </header>
 
-<main class="layout">
 
-    <!-- NOTES -->
-    <section class="column">
-        <div class="card file-card notes-card">
+    <main class="layout">
+        <section class="column">
+            <div class="card file-card notes-card">
+                <div class="card-title-row">
+                    <h2 class="card-title">Add Notes</h2>
+                    <button class="add-button" id="addNotesButton" type="button">
+                        <span class="plus">+</span> Add Notes
+                    </button>
+                </div>
 
-            <div class="card-title-row">
-                <h2 class="card-title">Your Notes</h2>
+                <input id="notesInput" type="file" accept=".pdf,application/pdf" multiple>
 
-                <button class="add-button" id="addNotesButton" type="button">
-                    <span class="plus">+</span> Add Notes
+                <div class="file-content" id="notesContent">
+                    <div class="empty-upload" id="notesEmpty">
+                        <div>Upload your notes using the upload button</div>
+                    </div>
+                    <div class="file-list" id="notesList"></div>
+                </div>
+            </div>
+        </section>
+
+
+        <section class="column middle">
+            <div class="card file-card questions-card">
+                <div class="card-title-row">
+                    <h2 class="card-title">Questions</h2>
+                    <button class="add-button questions-add" id="addQuestionsButton" type="button">
+                        <span class="plus">+</span> Add Questions
+                    </button>
+                </div>
+
+                <input id="questionsInput" type="file" accept=".pdf,application/pdf" multiple>
+
+                <div class="file-content" id="questionsContent">
+                    <div class="empty-upload" id="questionsEmpty">
+                        <div>Upload your questions using the upload button</div>
+                    </div>
+                    <div class="file-list" id="questionsList"></div>
+                </div>
+            </div>
+
+            <div class="card output-card">
+                <div class="card-title-row">
+                    <h2 class="card-title">Output</h2>
+                </div>
+
+                <div class="output-box" id="outputBox">
+                    <div class="output-placeholder" id="outputPlaceholder">
+                        <div class="output-icon">▣</div>
+                        <div class="output-main">Your generated PDFs will appear here</div>
+                        <div class="output-sub">Click "Generate" to start processing</div>
+                    </div>
+                    <div class="output-list" id="outputList"></div>
+                </div>
+            </div>
+
+
+            <div class="card activity-card">
+                <div class="card-title-row activity-title-row">
+                    <h2 class="card-title activity-title">Activity</h2>
+                </div>
+
+                <div class="terminal" id="terminal">
+                    <div class="terminal-line">Ready. Add notes and question papers to begin.</div>
+                </div>
+            </div>
+
+        </section>
+
+
+        <aside class="column right">
+            <div class="card config-card">
+                <div class="card-title-row">
+                    <h2 class="card-title">Configuration</h2>
+                    <span class="config-gear">⚙</span>
+                </div>
+
+                <div class="config-body">
+                    <div class="config-section">
+                        <label class="field-label" for="apiKey">Gemini API Key</label>
+                        <div class="input-wrap">
+                            <input id="apiKey" class="text-input password-input" type="password"
+                                placeholder="Enter your Gemini API key" autocomplete="off">
+                            <button class="show-key" id="showKey" type="button" title="Show API key">
+                                ◉
+                            </button>
+                        </div>
+                        <div class="field-help">Your API key is used for this session.</div>
+                    </div>
+
+                    <div class="config-section">
+                        <label class="field-label" for="model">Model</label>
+                        <input id="model" class="text-input" type="text" value="gemini-3.6-flash"
+                            placeholder="Enter model name">
+                        <div class="field-help">
+                            Model used for decomposition, generation and image selection.
+                        </div>
+                    </div>
+
+                    <div class="config-section">
+                        <label class="field-label" for="rpm">RPM (Requests Per Minute)</label>
+                        <input id="rpm" class="text-input" type="number" min="1" placeholder="5" value="5">
+                        <div class="field-help">
+                            Set this to the request limit of your API account.
+                        </div>
+                    </div>
+
+                    <div class="privacy-note">
+                        🔒 API credentials are supplied by the user and should not be stored by the application.
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="generate-area">
+                <button class="generate-button" id="generateButton" type="button">
+                    ✦ &nbsp; Generate
                 </button>
-            </div>
-
-            <input id="notesInput" type="file" accept=".pdf,application/pdf" multiple>
-
-            <div class="file-content" id="notesContent">
-                <div class="empty-upload" id="notesEmpty">
-                    <div>Upload your notes using the upload button</div>
+                <div class="generate-help">
+                    This will process your notes and questions to generate answer PDFs.
                 </div>
-
-                <div class="file-list" id="notesList"></div>
             </div>
+        </aside>
 
-        </div>
-    </section>
+    </main>
 
-
-    <!-- QUESTIONS + OUTPUT + ACTIVITY -->
-    <section class="column middle">
-
-        <div class="card file-card questions-card">
-
-            <div class="card-title-row">
-                <h2 class="card-title">Questions</h2>
-
-                <button class="add-button questions-add" id="addQuestionsButton" type="button">
-                    <span class="plus">+</span> Add Questions
-                </button>
-            </div>
-
-            <input id="questionsInput" type="file" accept=".pdf,application/pdf" multiple>
-
-            <div class="file-content" id="questionsContent">
-                <div class="empty-upload" id="questionsEmpty">
-                    <div>Upload your questions using the upload button</div>
-                </div>
-
-                <div class="file-list" id="questionsList"></div>
-            </div>
-
-        </div>
-
-
-        <div class="card output-card">
-            <div class="card-title-row">
-                <h2 class="card-title">Output</h2>
-            </div>
-
-            <div class="output-box" id="outputBox">
-                <div class="output-placeholder" id="outputPlaceholder">
-                    <div class="output-icon">▣</div>
-                    <div class="output-main">Your generated PDFs will appear here</div>
-                    <div class="output-sub">Click "Generate" to start processing</div>
-                </div>
-
-                <div class="output-list" id="outputList"></div>
-            </div>
-        </div>
-
-
-        <div class="card activity-card">
-            <div class="card-title-row activity-title-row">
-                <h2 class="card-title activity-title">Activity</h2>
-            </div>
-
-            <div class="terminal" id="terminal">
-                <div class="terminal-line">Ready. Add notes and question papers to begin.</div>
-            </div>
-        </div>
-
-    </section>
-
-
-    <!-- CONFIG -->
-    <aside class="column right">
-
-        <div class="card config-card">
-
-            <div class="card-title-row">
-                <h2 class="card-title">Configuration</h2>
-                <span class="config-gear">⚙</span>
-            </div>
-
-            <div class="config-body">
-
-                <div class="config-section">
-                    <label class="field-label" for="apiKey">Gemini API Key</label>
-
-                    <div class="input-wrap">
-                        <input
-                            id="apiKey"
-                            class="text-input password-input"
-                            type="password"
-                            placeholder="Enter your Gemini API key"
-                            autocomplete="off"
-                        >
-
-                        <button class="show-key" id="showKey" type="button" title="Show API key">
-                            ◉
-                        </button>
-                    </div>
-
-                    <div class="field-help">Your API key is used for this session.</div>
-                </div>
-
-
-                <div class="config-section">
-                    <label class="field-label" for="model">Model</label>
-
-                    <input
-                        id="model"
-                        class="text-input"
-                        type="text"
-                        value="gemini-3.6-flash"
-                        placeholder="Enter model name"
-                    >
-
-                    <div class="field-help">
-                        Model used for decomposition, generation and image selection.
-                    </div>
-                </div>
-
-
-                <div class="config-section">
-                    <label class="field-label" for="rpm">RPM (Requests Per Minute)</label>
-
-                    <input
-                        id="rpm"
-                        class="text-input"
-                        type="number"
-                        min="1"
-                        placeholder="5"
-                        value="5"
-                    >
-
-                    <div class="field-help">
-                        Set this to the request limit of your API account.
-                    </div>
-                </div>
-
-                <div class="privacy-note">
-                    🔒 API credentials are supplied by the user and should not be stored by the application.
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div class="generate-area">
-
-            <button class="generate-button" id="generateButton" type="button">
-                ✦ &nbsp; Generate
-            </button>
-
-            <div class="generate-help">
-                This will process your notes and questions to generate answer PDFs.
-            </div>
-
-        </div>
-
-    </aside>
-
-</main>
-
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
+
 </html>
