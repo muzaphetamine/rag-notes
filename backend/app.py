@@ -1,10 +1,8 @@
 from flask import Flask, request, jsonify, send_from_directory
 from pathlib import Path
 import threading
-#from pipeline import run_pipeline
-import time
 import shutil
-from reportlab.pdfgen import canvas
+
 
 app = Flask(__name__)
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -34,7 +32,6 @@ def clean_workspace():
         BASE_DIR / "output",
         BASE_DIR / "database" / "chroma"
     ]
-
     for folder in folders:
         if not folder.exists():
             continue
@@ -54,6 +51,7 @@ def home():
         "index.html"
     )
 
+
 @app.route("/<path:filename>")
 def frontend_files(filename):
     return send_from_directory(
@@ -65,15 +63,15 @@ def frontend_files(filename):
 def run_generation(api_key, rpm, model):
     global pipeline_running
     try:
+        from pipeline import run_pipeline
         update_status("Starting pipeline...")
-        #run_pipeline(
-        #    api_key=api_key,
-        #    rpm=rpm,
-        #    model=model,
-        #    progress_callback=update_status
-        #)
-        #update_status("Generation complete!")
-        fake_pipeline(update_status)
+        run_pipeline(
+            api_key=api_key,
+            rpm=rpm,
+            model=model,
+            progress_callback=update_status
+        )
+        update_status("Generation complete!")
     except Exception as e:
         update_status(f"Error: {e}")
     finally:
@@ -164,32 +162,9 @@ def download(filename):
     )
 
 
-def fake_pipeline(progress_callback):
-    progress_callback("Starting pipeline...")
-    time.sleep(2)
-    progress_callback("Extracting notes...")
-    time.sleep(2)
-    progress_callback("Extracting questions...")
-    time.sleep(2)
-    progress_callback("Chunking study material...")
-    time.sleep(2)
-    progress_callback("Generating embeddings...")
-    time.sleep(2)
-    progress_callback("Generating answers...")
-    time.sleep(2)
-    progress_callback("Generating PDFs...")
-    time.sleep(2)
-    test_pdf = PDF_DIR / "test_answer.pdf"
-    pdf = canvas.Canvas(str(test_pdf))
-    pdf.drawString(100, 750, "RAG Notes - Test Answer")
-    pdf.drawString(100, 720, "Frontend/backend connection test successful.")
-    pdf.save()
-    progress_callback("Generation complete!")
-
-
 if __name__ == "__main__":
     clean_workspace()
     SOURCE_DIR.mkdir(parents=True, exist_ok=True)
     QUESTION_DIR.mkdir(parents=True, exist_ok=True)
     PDF_DIR.mkdir(parents=True, exist_ok=True)
-    app.run(debug=True)
+    app.run(debug=False)
