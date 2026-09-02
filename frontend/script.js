@@ -227,8 +227,61 @@ function downloadFile(file) {
 }
 
 
+async function uploadFiles(files, type) {
+    const formData = new FormData();
+
+    for (const file of files) {
+        formData.append("files", file);
+    }
+
+    formData.append("type", type);
+
+    const response = await fetch("/upload", {
+        method: "POST",
+        body: formData
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "File upload failed.");
+    }
+
+    return await response.json();
+}
+
+
+async function pollStatus() {
+    const response = await fetch("/status");
+
+    if (!response.ok) {
+        throw new Error("Could not get pipeline status.");
+    }
+
+    const data = await response.json();
+
+    log(data.status);
+
+    if (data.running) {
+        setTimeout(pollStatus, 1000);
+        return;
+    }
+
+    const outputsResponse = await fetch("/outputs");
+
+    if (!outputsResponse.ok) {
+        throw new Error("Could not load generated files.");
+    }
+
+    const files = await outputsResponse.json();
+
+    renderOutputFiles(files);
+
+    generateButton.disabled = false;
+}
+
+
 /* Generate */
-generateButton.addEventListener("click", () => {
+generateButton.addEventListener("click", async () => {
 
     if (notes.length === 0) {
         log("No notes selected.");
@@ -252,32 +305,62 @@ generateButton.addEventListener("click", () => {
         document.getElementById("rpm").value;
 
     const model =
-        document.getElementById("model").value;
+        document.getElementById("model").value.trim();
 
-    log(
-        `Ready to process ${notes.length} note file(s) and ${questions.length} question file(s).`
-    );
+    if (!rpm) {
+        log("RPM is required.");
+        return;
+    }
 
-    /*
-     * Backend integration point.
-     *
-     * Later this becomes something like:
-     *
-     * generateButton.disabled = true;
-     *
-     * const result = await runPipeline({
-     *     notes,
-     *     questions,
-     *     apiKey,
-     *     model,
-     *     rpm,
-     *     onLog: log
-     * });
-     *
-     * renderOutputFiles(result.files);
-     *
-     * generateButton.disabled = false;
-     */
+    if (!model) {
+        log("Model is required.");
+        return;
+    }
+
+    generateButton.disabled = true;
+
+    outputList.innerHTML = "";
+    outputList.classList.remove("visible");
+    outputPlaceholder.style.display = "block";
+
+    try {
+        log("Uploading notes...");
+
+        await uploadFiles(notes, "sources");
+
+        log("Uploading question papers...");
+
+        await uploadFiles(questions, "questions");
+
+        log("Starting pipeline...");
+
+        const response = await fetch("/generate", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                api_key: apiKey,
+                rpm: rpm,
+                model: model
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(
+                error.error || "Failed to start generation."
+            );
+        }
+
+        log("Pipeline started...");
+
+        pollStatus();
+
+    } catch (error) {
+        log(`Error: ${error.message}`);
+        generateButton.disabled = false;
+    }
 });
 
 renderFiles();
