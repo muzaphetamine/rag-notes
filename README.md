@@ -4,11 +4,14 @@ Do you have 5 PDFs worth of notes, each 70 pages long?
 
 Just download this code  
 Run "pip install -r requirements.txt" in the folder terminal (only ONCE)  
-Double click "START.bat" to use  
-And get your answers.  
+For Windows:  
+-Double click "START.bat" to use  
+For mac/linux:  
+-Run "python backend\app.py" in the folder terminal  
+-Open the link  
 
 REQUIREMENTS:  
--Works on windows only sorry  
+-START.bat works on windows only sorry  
 -Need atleast 8GB ram  
 -Its gemini token hungry, VERY hungry, so might need a paid tier with the API key  
 And...thats it ig. More will be added with feedback
